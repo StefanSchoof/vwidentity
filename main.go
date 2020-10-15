@@ -19,14 +19,14 @@ import (
 // with help from https://github.com/thomasesmith/vw-car-net-api
 
 // auth urls
-const loginURL = "https://www.volkswagen.de/app/authproxy/login?fag=vw-de&scope-vw-de=profile,address,phone,carConfigurations,dealers,cars,vin,profession&prompt-vw-de=login&redirectUrl=https://www.volkswagen.de/de/besitzer-und-nutzer/myvolkswagen.html"
+const loginURL = "https://www.volkswagen.de/app/authproxy/login?fag=vw-de,vwag-weconnect&scope-vw-de=profile,address,phone,carConfigurations,dealers,cars,vin,profession&scope-vwag-weconnect=openid&prompt-vw-de=login&prompt-vwag-weconnect=none&redirectUrl=https://www.volkswagen.de/de/besitzer-und-nutzer/myvolkswagen.html"
 const identifierURL = "https://identity.vwgroup.io/signin-service/v1/4fb52a96-2ba3-4f99-a3fc-583bb197684b@apps_vw-dilab_com/login/identifier"
 const authenticateURL = "https://identity.vwgroup.io/signin-service/v1/4fb52a96-2ba3-4f99-a3fc-583bb197684b@apps_vw-dilab_com/login/authenticate"
 const tokenURL = "https://www.volkswagen.de/app/authproxy/vw-de/tokens"
 const userInfoURL = "https://www.volkswagen.de/app/authproxy/vw-de/user"
 
 // api urls
-const realCarURLFormat = "https://customer-profile.apps.emea.vwapps.io/v2/customers/%s/realCarData"
+const carsURL = "https://w1hub-backend-production.apps.emea.vwapps.io/cars"
 
 type conf struct {
 	Mail     string `yaml:"mail"`
@@ -55,8 +55,7 @@ func main() {
 	}
 	var bearer = "Bearer " + info.BearerAccessToken
 
-	realCarURL := fmt.Sprintf(realCarURLFormat, info.Sub)
-	req, err := http.NewRequest("GET", realCarURL, nil)
+	req, err := http.NewRequest("GET", carsURL, nil)
 	req.Header.Add("Authorization", bearer)
 	client := &http.Client{}
 	resp, err := executeRequest(req, *client)
@@ -115,6 +114,10 @@ func getHTTPClient() (client *http.Client, err error) {
 
 	return &http.Client{
 		Jar: jar,
+		// We have over 10 redirects (wtf) and need them
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return nil
+		},
 	}, nil
 }
 
